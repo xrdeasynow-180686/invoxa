@@ -25,6 +25,9 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
 
   final _businessName = TextEditingController();
   final _businessAddress = TextEditingController();
+  final _businessPhone = TextEditingController();
+  final _businessEmail = TextEditingController();
+  final _businessAbn = TextEditingController();
   final _clientName = TextEditingController();
   final _clientAddress = TextEditingController();
   final _currency = TextEditingController(text: r'$');
@@ -70,6 +73,9 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
     await BusinessStorage.save(
       name: _businessName.text,
       address: _businessAddress.text,
+      phone: _businessPhone.text,
+      email: _businessEmail.text,
+      abn: _businessAbn.text,
       logoBytes: _logoBytes,
     );
   }
@@ -80,6 +86,9 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
     setState(() {
       _businessName.clear();
       _businessAddress.clear();
+      _businessPhone.clear();
+      _businessEmail.clear();
+      _businessAbn.clear();
       _logoBytes = null;
     });
     _showSnack('Saved business details cleared.');
@@ -89,6 +98,9 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
   void dispose() {
     _businessName.dispose();
     _businessAddress.dispose();
+    _businessPhone.dispose();
+    _businessEmail.dispose();
+    _businessAbn.dispose();
     _clientName.dispose();
     _clientAddress.dispose();
     _currency.dispose();
@@ -256,6 +268,30 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
                 decoration: _dec('Business address'),
                 maxLines: 2,
                 validator: _required,
+              ),
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: _businessPhone,
+                decoration: _dec('Phone number'),
+                keyboardType: TextInputType.phone,
+                validator: _required,
+              ),
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: _businessEmail,
+                decoration: _dec('Email address'),
+                keyboardType: TextInputType.emailAddress,
+                validator: (v) {
+                  if (v == null || v.trim().isEmpty) return 'Required';
+                  final ok = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(v.trim());
+                  return ok ? null : 'Invalid email';
+                },
+              ),
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: _businessAbn,
+                decoration: _dec('ABN (optional)'),
+                keyboardType: TextInputType.number,
               ),
               const SizedBox(height: 16),
               _section('Client'),

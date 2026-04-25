@@ -4,12 +4,14 @@ A simple, fast invoice generator. Create a professional invoice with your logo a
 export/share it as a PDF in under 30 seconds.
 
 ## Features
-- Business & client details
+- Business details: name, address, **phone, email, ABN (optional)** + logo
+- Client details
 - Auto-generated invoice number, today's date by default
 - Add multiple items (name, qty, price) with auto-calculated total
 - Logo upload from device gallery
 - Manual currency symbol (e.g. `$`, `€`, `₹`, `AED`, etc.)
 - Generate professional PDF (logo + business + client + items table + bold total)
+- **All business details (name, address, phone, email, ABN, logo) are saved locally and auto-fill on next launch**
 - Save PDF locally and share via WhatsApp, Email, etc.
 
 ## Project structure

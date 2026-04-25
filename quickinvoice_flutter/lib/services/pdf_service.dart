@@ -97,7 +97,17 @@ class PdfService {
                 style: pw.TextStyle(fontSize: 22, fontWeight: pw.FontWeight.bold),
               ),
               pw.SizedBox(height: 4),
-              pw.Text(invoice.businessAddress, style: const pw.TextStyle(fontSize: 11)),
+              if (invoice.businessAddress.isNotEmpty)
+                pw.Text(invoice.businessAddress, style: const pw.TextStyle(fontSize: 11)),
+              if (invoice.businessPhone.isNotEmpty)
+                pw.Text('Phone: ${invoice.businessPhone}',
+                    style: const pw.TextStyle(fontSize: 11)),
+              if (invoice.businessEmail.isNotEmpty)
+                pw.Text('Email: ${invoice.businessEmail}',
+                    style: const pw.TextStyle(fontSize: 11)),
+              if (invoice.businessAbn.isNotEmpty)
+                pw.Text('ABN: ${invoice.businessAbn}',
+                    style: const pw.TextStyle(fontSize: 11)),
             ],
           ),
         ),

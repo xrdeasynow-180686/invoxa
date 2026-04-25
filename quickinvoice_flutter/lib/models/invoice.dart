@@ -3,6 +3,9 @@ import 'item.dart';
 class Invoice {
   String businessName;
   String businessAddress;
+  String businessPhone;
+  String businessEmail;
+  String businessAbn;
   String clientName;
   String clientAddress;
   String invoiceNumber;
@@ -17,6 +20,9 @@ class Invoice {
   Invoice({
     required this.businessName,
     required this.businessAddress,
+    this.businessPhone = '',
+    this.businessEmail = '',
+    this.businessAbn = '',
     required this.clientName,
     required this.clientAddress,
     required this.invoiceNumber,
