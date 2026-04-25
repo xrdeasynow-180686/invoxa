@@ -74,15 +74,19 @@ flutter run
 - `path_provider` ^2.1.4 — local filesystem path for saving PDF
 - `share_plus` ^10.0.2 — system share sheet (WhatsApp, Email, …)
 - `intl` ^0.19.0 — date formatting
+- `shared_preferences` ^2.3.2 — local key-value storage for the saved business profile (offline)
 
 > No deprecated/discontinued packages; `open_file` is intentionally NOT used.
 
 ## How to use
-1. Tap the logo placeholder → pick an image from your gallery.
-2. Fill in business and client details.
-3. The invoice number and date are pre-filled (editable date via tap).
-4. Add items; each row auto-calculates a subtotal; grand total updates live.
-5. Tap **Generate Invoice** → a sheet appears with:
+1. **First launch** — a snackbar prompts you to enter your business details.
+2. Tap the logo placeholder → pick an image from your gallery.
+3. Fill in business and client details.
+4. The invoice number and date are pre-filled (editable date via tap).
+5. Add items; each row auto-calculates a subtotal; grand total updates live.
+6. Tap **Generate Invoice** → a sheet appears with:
    - **Preview / Print** — system print/preview dialog
    - **Share PDF** — WhatsApp, Email, Drive, etc.
    - The local save path is shown at the bottom.
+7. Your **logo, business name, and address are saved locally** (SharedPreferences) when you tap *Generate Invoice*. On the next launch they auto-fill — you only have to enter the client and items.
+8. Tap the **trash icon** in the app bar to clear the saved business profile.

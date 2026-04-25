@@ -9,6 +9,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../models/invoice.dart';
 import '../models/item.dart';
+import '../services/business_storage.dart';
 import '../services/pdf_service.dart';
 import '../widgets/item_input_widget.dart';
 
@@ -38,6 +39,50 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
   void initState() {
     super.initState();
     _invoiceNumber = _generateInvoiceNumber();
+    _loadSavedBusiness();
+  }
+
+  Future<void> _loadSavedBusiness() async {
+    try {
+      final profile = await BusinessStorage.load();
+      if (!mounted) return;
+      if (profile.isEmpty && profile.logoBytes == null) {
+        // First launch — gently prompt the user.
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          _showSnack('Welcome! Please enter your business details — they will be saved for next time.');
+        });
+        return;
+      }
+      setState(() {
+        _businessName.text = profile.name;
+        _businessAddress.text = profile.address;
+        if (profile.logoBytes != null) {
+          _logoBytes = profile.logoBytes!.toList();
+        }
+      });
+    } catch (_) {
+      // Ignore storage errors silently — the form remains usable.
+    }
+  }
+
+  Future<void> _persistBusiness() async {
+    await BusinessStorage.save(
+      name: _businessName.text,
+      address: _businessAddress.text,
+      logoBytes: _logoBytes,
+    );
+  }
+
+  Future<void> _clearSavedBusiness() async {
+    await BusinessStorage.clear();
+    if (!mounted) return;
+    setState(() {
+      _businessName.clear();
+      _businessAddress.clear();
+      _logoBytes = null;
+    });
+    _showSnack('Saved business details cleared.');
   }
 
   @override
@@ -183,6 +228,13 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
         backgroundColor: Colors.indigo,
         foregroundColor: Colors.white,
         elevation: 0,
+        actions: [
+          IconButton(
+            tooltip: 'Clear saved business',
+            icon: const Icon(Icons.delete_sweep_outlined),
+            onPressed: _clearSavedBusiness,
+          ),
+        ],
       ),
       body: SafeArea(
         child: Form(
