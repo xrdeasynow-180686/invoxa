@@ -77,7 +77,17 @@ flutter pub get
 
 > Note: On Android 13+ (API 33) the app falls back to its private documents directory because the public `Downloads` folder requires the MediaStore API to write reliably across all OEMs. The path that was used is shown in the success sheet, and the file can still be opened/shared from there.
 
-### 5. Run
+### 5. Generate the app launcher icon (one-time)
+The brand icon is included at `assets/app_icon.png`. To bake it into Android & iOS native icon sets:
+
+```bash
+flutter pub get
+dart run flutter_launcher_icons
+```
+
+This regenerates `android/app/src/main/res/mipmap-*` and `ios/Runner/Assets.xcassets/AppIcon.appiconset` automatically. Re-run this command any time you replace `assets/app_icon.png`.
+
+### 6. Run
 ```bash
 flutter run
 ```
