@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:printing/printing.dart';
@@ -35,6 +36,7 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
   late String _invoiceNumber;
   DateTime _date = DateTime.now();
   List<int>? _logoBytes;
+  Uint8List? _defaultLogoBytes;
   final List<Item> _items = [Item()];
   bool _generating = false;
 
@@ -42,7 +44,16 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
   void initState() {
     super.initState();
     _invoiceNumber = _generateInvoiceNumber();
+    _loadDefaultLogo();
     _loadSavedBusiness();
+  }
+
+  Future<void> _loadDefaultLogo() async {
+    try {
+      final bd = await rootBundle.load('assets/default_invoice_logo.png');
+      if (!mounted) return;
+      setState(() => _defaultLogoBytes = bd.buffer.asUint8List());
+    } catch (_) {/* no-op */}
   }
 
   Future<void> _loadSavedBusiness() async {
@@ -457,15 +468,22 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: _logoBytes == null
-                  ? const Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.add_a_photo, size: 32, color: Colors.grey),
-                        SizedBox(height: 6),
-                        Text('Add logo',
-                            style: TextStyle(color: Colors.grey, fontSize: 12)),
-                      ],
-                    )
+                  ? (_defaultLogoBytes != null
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.memory(_defaultLogoBytes!,
+                              fit: BoxFit.cover),
+                        )
+                      : const Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.add_a_photo, size: 32, color: Colors.grey),
+                            SizedBox(height: 6),
+                            Text('Add logo',
+                                style:
+                                    TextStyle(color: Colors.grey, fontSize: 12)),
+                          ],
+                        ))
                   : ClipRRect(
                       borderRadius: BorderRadius.circular(12),
                       child: Image.memory(
@@ -475,11 +493,22 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
                     ),
             ),
           ),
+          if (_logoBytes == null)
+            const Padding(
+              padding: EdgeInsets.only(top: 4),
+              child: Text(
+                'Tap to upload your own logo',
+                style: TextStyle(fontSize: 11, color: Colors.grey),
+              ),
+            ),
           if (_logoBytes != null)
             TextButton.icon(
-              onPressed: () => setState(() => _logoBytes = null),
+              onPressed: () async {
+                setState(() => _logoBytes = null);
+                await _persistBusiness();
+              },
               icon: const Icon(Icons.close, size: 16),
-              label: const Text('Remove logo'),
+              label: const Text('Use default logo'),
             ),
         ],
       ),

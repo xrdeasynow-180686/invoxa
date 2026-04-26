@@ -39,6 +39,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/app_icon.png
+    - assets/default_invoice_logo.png
 
 flutter_launcher_icons:
   android: true
