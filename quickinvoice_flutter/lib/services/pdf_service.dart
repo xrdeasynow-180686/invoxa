@@ -52,11 +52,38 @@ class PdfService {
     return doc.save();
   }
 
-  /// Saves the PDF bytes locally and returns the file path.
+  /// Saves the PDF bytes to the **public Downloads** folder on Android
+  /// (visible in the device's file manager), or to the app's documents
+  /// directory on iOS / when the public folder is unavailable.
+  /// Returns the absolute file path that was written.
   static Future<String> savePdf(Uint8List bytes, String invoiceNumber) async {
-    final dir = await getApplicationDocumentsDirectory();
     final safeName = invoiceNumber.replaceAll(RegExp(r'[^A-Za-z0-9_-]'), '_');
-    final file = File('${dir.path}/InovXA_$safeName.pdf');
+    final filename = 'InovXA_$safeName.pdf';
+
+    Directory? targetDir;
+
+    if (Platform.isAndroid) {
+      // Public Downloads folder — visible in any file manager.
+      // Requires WRITE_EXTERNAL_STORAGE (API ≤ 32) +
+      // android:requestLegacyExternalStorage="true" in AndroidManifest.
+      final publicDownloads = Directory('/storage/emulated/0/Download');
+      try {
+        if (!await publicDownloads.exists()) {
+          await publicDownloads.create(recursive: true);
+        }
+        // Quick write-probe so we don't keep a stale handle on permission denial.
+        final probe = File('${publicDownloads.path}/.inovxa_probe');
+        await probe.writeAsBytes(<int>[], flush: true);
+        await probe.delete();
+        targetDir = publicDownloads;
+      } catch (_) {
+        targetDir = null; // fall through to app docs
+      }
+    }
+
+    targetDir ??= await getApplicationDocumentsDirectory();
+
+    final file = File('${targetDir.path}/$filename');
     await file.writeAsBytes(bytes, flush: true);
     return file.path;
   }

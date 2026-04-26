@@ -61,8 +61,21 @@ flutter pub get
 <string>Capture your business logo</string>
 ```
 
-**Android** — `image_picker` works without extra permissions on modern Android
-(the system Photo Picker is used). No edits needed for typical builds.
+**Android** — open `android/app/src/main/AndroidManifest.xml` and add the following so the generated PDF lands in the public **Downloads** folder (visible in any file manager):
+
+1. Inside `<manifest>` (above `<application>`):
+   ```xml
+   <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+                    android:maxSdkVersion="32" />
+   <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+                    android:maxSdkVersion="32" />
+   ```
+2. On the `<application ...>` tag add:
+   ```xml
+   android:requestLegacyExternalStorage="true"
+   ```
+
+> Note: On Android 13+ (API 33) the app falls back to its private documents directory because the public `Downloads` folder requires the MediaStore API to write reliably across all OEMs. The path that was used is shown in the success sheet, and the file can still be opened/shared from there.
 
 ### 5. Run
 ```bash
