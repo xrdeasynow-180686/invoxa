@@ -53,19 +53,40 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
         // First launch — gently prompt the user.
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!mounted) return;
-          _showSnack('Welcome! Please enter your business details — they will be saved for next time.');
+          _showSnack('Welcome! Please enter your business details — they will be saved automatically.');
+          _attachAutoSaveListeners();
         });
         return;
       }
       setState(() {
         _businessName.text = profile.name;
         _businessAddress.text = profile.address;
+        _businessPhone.text = profile.phone;
+        _businessEmail.text = profile.email;
+        _businessAbn.text = profile.abn;
         if (profile.logoBytes != null) {
           _logoBytes = profile.logoBytes!.toList();
         }
       });
+      _attachAutoSaveListeners();
     } catch (_) {
       // Ignore storage errors silently — the form remains usable.
+      _attachAutoSaveListeners();
+    }
+  }
+
+  bool _listenersAttached = false;
+  void _attachAutoSaveListeners() {
+    if (_listenersAttached) return;
+    _listenersAttached = true;
+    for (final c in [
+      _businessName,
+      _businessAddress,
+      _businessPhone,
+      _businessEmail,
+      _businessAbn,
+    ]) {
+      c.addListener(_persistBusiness);
     }
   }
 
@@ -96,6 +117,15 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
 
   @override
   void dispose() {
+    for (final c in [
+      _businessName,
+      _businessAddress,
+      _businessPhone,
+      _businessEmail,
+      _businessAbn,
+    ]) {
+      c.removeListener(_persistBusiness);
+    }
     _businessName.dispose();
     _businessAddress.dispose();
     _businessPhone.dispose();
@@ -124,6 +154,7 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
       if (picked == null) return;
       final bytes = await File(picked.path).readAsBytes();
       setState(() => _logoBytes = bytes);
+      await _persistBusiness(); // save logo immediately
     } catch (e) {
       _showSnack('Could not pick image: $e');
     }
@@ -290,8 +321,8 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
               const SizedBox(height: 8),
               TextFormField(
                 controller: _businessAbn,
-                decoration: _dec('ABN (optional)'),
-                keyboardType: TextInputType.number,
+                decoration: _dec('Business / Tax number (optional)'),
+                keyboardType: TextInputType.text,
               ),
               const SizedBox(height: 16),
               _section('Client'),

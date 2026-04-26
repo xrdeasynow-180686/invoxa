@@ -133,7 +133,7 @@ class PdfService {
                 pw.Text('Email: ${invoice.businessEmail}',
                     style: const pw.TextStyle(fontSize: 11)),
               if (invoice.businessAbn.isNotEmpty)
-                pw.Text('ABN: ${invoice.businessAbn}',
+                pw.Text('Business / Tax No.: ${invoice.businessAbn}',
                     style: const pw.TextStyle(fontSize: 11)),
             ],
           ),
