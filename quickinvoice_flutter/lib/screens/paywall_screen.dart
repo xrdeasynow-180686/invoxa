@@ -147,11 +147,38 @@ class _PaywallScreenState extends State<PaywallScreen> {
                     ],
                   ),
                 ),
+              if (!unlocked && _billing.product == null && !storeUnavailable)
+                Container(
+                  margin: const EdgeInsets.only(top: 12),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.shade50,
+                    border: Border.all(color: Colors.amber.shade200),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.info_outline, color: Colors.amber),
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Pro purchase becomes available once the app is published to Google Play.',
+                          style: TextStyle(fontSize: 12),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               const SizedBox(height: 24),
               if (storeUnavailable)
                 _errorBanner(
                     'Google Play is unavailable on this device. Sign in with a Google account that has Play Store installed.'),
-              if (_billing.error != null && !unlocked)
+              if (_billing.error != null &&
+                  !unlocked &&
+                  !_billing.error!.toLowerCase().contains('product not found') &&
+                  !_billing.error!
+                      .toLowerCase()
+                      .contains('no product details'))
                 _errorBanner(_billing.error!),
               if (unlocked) _colorPicker() else _purchaseButtons(purchasing),
               const SizedBox(height: 24),

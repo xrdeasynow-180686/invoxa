@@ -672,54 +672,58 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
                 style: TextStyle(fontSize: 12, color: Colors.black54),
               ),
             ),
-          if (isPro) ...[
-            const SizedBox(height: 12),
-            const Text(
-              'Invoice colour theme',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+          const SizedBox(height: 12),
+          Text(
+            'Invoice colour theme',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: isPro ? Colors.black : Colors.grey.shade600,
             ),
-            const SizedBox(height: 6),
-            DropdownButtonFormField<int>(
-              value: _colorIdx,
-              isDense: true,
-              decoration: _dec('Theme'),
-              items: [
-                for (var i = 0; i < kPalettes.length; i++)
-                  DropdownMenuItem<int>(
-                    value: i,
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 18,
-                          height: 18,
-                          decoration: BoxDecoration(
-                            color: Color(kPalettes[i].accent),
-                            borderRadius: BorderRadius.circular(4),
-                            border: Border.all(
-                                color: Colors.black12, width: 0.5),
-                          ),
+          ),
+          const SizedBox(height: 6),
+          DropdownButtonFormField<int>(
+            value: _colorIdx,
+            isDense: true,
+            decoration: _dec('Theme'),
+            items: [
+              for (var i = 0; i < kPalettes.length; i++)
+                DropdownMenuItem<int>(
+                  value: i,
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 18,
+                        height: 18,
+                        decoration: BoxDecoration(
+                          color: Color(kPalettes[i].accent),
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(
+                              color: Colors.black12, width: 0.5),
                         ),
-                        const SizedBox(width: 10),
-                        Text(kPalettes[i].name),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(width: 10),
+                      Text(kPalettes[i].name),
+                    ],
                   ),
-              ],
-              onChanged: (v) async {
-                if (v == null) return;
-                setState(() => _colorIdx = v);
-                await UsageStorage.setColorIndex(v);
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      duration: const Duration(seconds: 1),
-                      content: Text('Theme set to ${kPalettes[v].name}'),
-                    ),
-                  );
-                }
-              },
-            ),
-          ],
+                ),
+            ],
+            onChanged: !isPro
+                ? null
+                : (v) async {
+                    if (v == null) return;
+                    setState(() => _colorIdx = v);
+                    await UsageStorage.setColorIndex(v);
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          duration: const Duration(seconds: 1),
+                          content: Text('Theme set to ${kPalettes[v].name}'),
+                        ),
+                      );
+                    }
+                  },
+          ),
         ],
       ),
     );
