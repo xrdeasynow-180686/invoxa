@@ -8,11 +8,13 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 import '../models/invoice.dart';
+import 'usage_storage.dart';
 
-/// Brand palette (single source of truth)
-const _navy = PdfColor.fromInt(0xFF0E1F4D);
-const _accent = PdfColor.fromInt(0xFF1F6FEB);
-const _accentSoft = PdfColor.fromInt(0xFFEFF4FF);
+/// Brand palette — mutable so it can be themed at runtime per the user's
+/// stored colour choice (set on the Paywall/Pro screen).
+PdfColor _navy = const PdfColor.fromInt(0xFF0E1F4D);
+PdfColor _accent = const PdfColor.fromInt(0xFF1F6FEB);
+PdfColor _accentSoft = const PdfColor.fromInt(0xFFEFF4FF);
 const _ink = PdfColor.fromInt(0xFF0F172A);
 const _muted = PdfColor.fromInt(0xFF6B7280);
 const _line = PdfColor.fromInt(0xFFE5E7EB);
@@ -40,6 +42,15 @@ class PdfService {
   /// client info, items, currency) from the [Invoice] passed in.
   /// If the user has not uploaded a logo, the bundled default brand logo is used.
   static Future<Uint8List> buildPdf(Invoice invoice) async {
+    // Apply the user's stored colour choice (default = Ocean blue).
+    final paletteIndex = await UsageStorage.getColorIndex();
+    final p = (paletteIndex >= 0 && paletteIndex < kPalettes.length)
+        ? kPalettes[paletteIndex]
+        : kPalettes[0];
+    _navy = PdfColor.fromInt(p.navy);
+    _accent = PdfColor.fromInt(p.accent);
+    _accentSoft = PdfColor.fromInt(p.accentSoft);
+
     final logo = await _resolveLogo(invoice.logoBytes);
     final iconFont = await _loadIconFont();
 
@@ -295,7 +306,7 @@ class PdfService {
             : pw.Container(
                 width: 5,
                 height: 5,
-                decoration: const pw.BoxDecoration(
+                decoration: pw.BoxDecoration(
                   color: _accent,
                   shape: pw.BoxShape.circle,
                 ),
@@ -318,7 +329,7 @@ class PdfService {
               pw.Container(
                 padding:
                     const pw.EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: const pw.BoxDecoration(color: _navy),
+                decoration: pw.BoxDecoration(color: _navy),
                 child: pw.Row(
                   mainAxisSize: pw.MainAxisSize.min,
                   children: [
@@ -409,7 +420,7 @@ class PdfService {
   static pw.Widget _itemsTable(Invoice invoice, String cur) {
     final rows = <pw.TableRow>[
       pw.TableRow(
-        decoration: const pw.BoxDecoration(color: _accent),
+        decoration: pw.BoxDecoration(color: _accent),
         children: [
           _th('#', pw.Alignment.center),
           _th('ITEM', pw.Alignment.centerLeft),
@@ -548,7 +559,7 @@ class PdfService {
                     child: pw.Container(
                       padding: const pw.EdgeInsets.symmetric(
                           vertical: 12, horizontal: 14),
-                      decoration: const pw.BoxDecoration(color: _accentSoft),
+                      decoration: pw.BoxDecoration(color: _accentSoft),
                       child: pw.Text(
                         'TOTAL',
                         style: pw.TextStyle(
@@ -565,7 +576,7 @@ class PdfService {
                       padding: const pw.EdgeInsets.symmetric(
                           vertical: 12, horizontal: 14),
                       alignment: pw.Alignment.centerRight,
-                      decoration: const pw.BoxDecoration(color: _navy),
+                      decoration: pw.BoxDecoration(color: _navy),
                       child: pw.Text(
                         '$cur${subtotal.toStringAsFixed(2)}',
                         style: pw.TextStyle(

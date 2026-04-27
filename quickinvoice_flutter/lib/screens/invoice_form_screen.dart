@@ -12,7 +12,9 @@ import '../models/invoice.dart';
 import '../models/item.dart';
 import '../services/business_storage.dart';
 import '../services/pdf_service.dart';
+import '../services/usage_storage.dart';
 import '../widgets/item_input_widget.dart';
+import 'paywall_screen.dart';
 
 class InvoiceFormScreen extends StatefulWidget {
   const InvoiceFormScreen({super.key});
@@ -208,6 +210,19 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
       return;
     }
 
+    // Paywall gate — block when free quota is exhausted and user is not Pro.
+    final allowed = await UsageStorage.canGenerateInvoice();
+    if (!allowed) {
+      if (!mounted) return;
+      final unlocked = await Navigator.of(context).push<bool>(
+        MaterialPageRoute(builder: (_) => const PaywallScreen()),
+      );
+      // Re-check after returning — proceed only if Pro is now active.
+      if (unlocked != true && !(await UsageStorage.isPro())) {
+        return;
+      }
+    }
+
     setState(() => _generating = true);
     try {
       // Persist business details locally for next time.
@@ -230,6 +245,9 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
 
       final bytes = await PdfService.buildPdf(invoice);
       final path = await PdfService.savePdf(bytes, invoice.invoiceNumber);
+
+      // Count this invoice toward the free quota.
+      await UsageStorage.incrementInvoiceCount();
 
       if (!mounted) return;
 
