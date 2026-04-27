@@ -1,11 +1,17 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Tracks invoice usage, Pro entitlement, and the chosen invoice colour theme.
-/// All persistence is local (SharedPreferences). No backend.
+import 'billing_service.dart';
+
+/// Tracks invoice usage, theme colour and Pro-only invoice options.
+///
+/// Pro entitlement (`isPro`) is owned exclusively by [BillingService] and
+/// only mirrored here as a UI cache. UI code MUST NOT toggle Pro state.
 class UsageStorage {
   static const _kCount = 'invoice_count';
-  static const _kPro = 'is_pro';
   static const _kColor = 'theme_color_index';
+  static const _kDueDays = 'pro_due_days';
+  static const _kDiscountPct = 'pro_discount_pct';
+  static const _kTaxPct = 'pro_tax_pct';
 
   /// Free invoices a user can create before the paywall appears.
   static const int freeInvoiceLimit = 3;
@@ -23,20 +29,16 @@ class UsageStorage {
     return next;
   }
 
-  // ───────── pro entitlement ─────────
-  static Future<bool> isPro() async {
-    final p = await SharedPreferences.getInstance();
-    return p.getBool(_kPro) ?? false;
-  }
+  // ───────── pro entitlement (read-only mirror of BillingService) ─────────
+  static bool isPro() => BillingService.instance.isPro;
 
-  static Future<void> setPro(bool value) async {
-    final p = await SharedPreferences.getInstance();
-    await p.setBool(_kPro, value);
-  }
+  /// Returns 0.2 (20%) for Pro users, 0.0 otherwise.
+  /// Use this to apply a Pro-only loyalty discount on future upgrade offers.
+  static double getProDiscount() => isPro() ? 0.2 : 0.0;
 
   /// Returns true if the user is allowed to generate the next invoice.
   static Future<bool> canGenerateInvoice() async {
-    if (await isPro()) return true;
+    if (isPro()) return true;
     final count = await getInvoiceCount();
     return count < freeInvoiceLimit;
   }
@@ -50,6 +52,37 @@ class UsageStorage {
   static Future<void> setColorIndex(int idx) async {
     final p = await SharedPreferences.getInstance();
     await p.setInt(_kColor, idx);
+  }
+
+  // ───────── Pro-only invoice options ─────────
+  static Future<int> getDueDays() async {
+    final p = await SharedPreferences.getInstance();
+    return p.getInt(_kDueDays) ?? 14;
+  }
+
+  static Future<void> setDueDays(int days) async {
+    final p = await SharedPreferences.getInstance();
+    await p.setInt(_kDueDays, days);
+  }
+
+  static Future<double> getDiscountPercent() async {
+    final p = await SharedPreferences.getInstance();
+    return p.getDouble(_kDiscountPct) ?? 0.0;
+  }
+
+  static Future<void> setDiscountPercent(double v) async {
+    final p = await SharedPreferences.getInstance();
+    await p.setDouble(_kDiscountPct, v);
+  }
+
+  static Future<double> getTaxPercent() async {
+    final p = await SharedPreferences.getInstance();
+    return p.getDouble(_kTaxPct) ?? 0.0;
+  }
+
+  static Future<void> setTaxPercent(double v) async {
+    final p = await SharedPreferences.getInstance();
+    await p.setDouble(_kTaxPct, v);
   }
 }
 

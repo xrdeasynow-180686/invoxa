@@ -10,6 +10,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../models/invoice.dart';
 import '../models/item.dart';
+import '../services/billing_service.dart';
 import '../services/business_storage.dart';
 import '../services/pdf_service.dart';
 import '../services/usage_storage.dart';
@@ -35,6 +36,11 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
   final _clientAddress = TextEditingController();
   final _currency = TextEditingController(text: r'$');
 
+  // Pro-only invoice options
+  final _dueDays = TextEditingController(text: '14');
+  final _discountPct = TextEditingController(text: '0');
+  final _taxPct = TextEditingController(text: '0');
+
   late String _invoiceNumber;
   DateTime _date = DateTime.now();
   List<int>? _logoBytes;
@@ -48,6 +54,24 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
     _invoiceNumber = _generateInvoiceNumber();
     _loadDefaultLogo();
     _loadSavedBusiness();
+    _loadProOptions();
+    BillingService.instance.addListener(_onBillingChange);
+  }
+
+  void _onBillingChange() {
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _loadProOptions() async {
+    final due = await UsageStorage.getDueDays();
+    final disc = await UsageStorage.getDiscountPercent();
+    final tax = await UsageStorage.getTaxPercent();
+    if (!mounted) return;
+    setState(() {
+      _dueDays.text = due.toString();
+      _discountPct.text = disc.toStringAsFixed(disc == disc.roundToDouble() ? 0 : 2);
+      _taxPct.text = tax.toStringAsFixed(tax == tax.roundToDouble() ? 0 : 2);
+    });
   }
 
   Future<void> _loadDefaultLogo() async {
@@ -130,6 +154,7 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
 
   @override
   void dispose() {
+    BillingService.instance.removeListener(_onBillingChange);
     for (final c in [
       _businessName,
       _businessAddress,
@@ -147,6 +172,9 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
     _clientName.dispose();
     _clientAddress.dispose();
     _currency.dispose();
+    _dueDays.dispose();
+    _discountPct.dispose();
+    _taxPct.dispose();
     super.dispose();
   }
 
@@ -218,7 +246,7 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
         MaterialPageRoute(builder: (_) => const PaywallScreen()),
       );
       // Re-check after returning — proceed only if Pro is now active.
-      if (unlocked != true && !(await UsageStorage.isPro())) {
+      if (unlocked != true && !UsageStorage.isPro()) {
         return;
       }
     }
@@ -240,6 +268,13 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
         date: _date,
         currency: _currency.text.trim(),
         items: _items,
+        dueDays: int.tryParse(_dueDays.text.trim()) ?? 14,
+        discountPercent: BillingService.instance.isPro
+            ? (double.tryParse(_discountPct.text.trim()) ?? 0.0)
+            : 0.0,
+        taxPercent: BillingService.instance.isPro
+            ? (double.tryParse(_taxPct.text.trim()) ?? 0.0)
+            : 0.0,
         logoBytes: _logoBytes,
       );
 
@@ -405,6 +440,7 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
                 ),
               ),
               const SizedBox(height: 16),
+              _proOptionsSection(),
               _section('Items'),
               ..._items.asMap().entries.map((e) => ItemInputWidget(
                     key: ValueKey('item-${e.key}-${_items.length}'),
@@ -548,6 +584,96 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
               color: Colors.indigo,
             )),
       );
+
+  Widget _proOptionsSection() {
+    final isPro = BillingService.instance.isPro;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: isPro ? Colors.amber.shade50 : Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+            color: isPro ? Colors.amber.shade300 : Colors.grey.shade300),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.workspace_premium,
+                  color: isPro ? Colors.amber.shade800 : Colors.grey),
+              const SizedBox(width: 8),
+              Text(
+                isPro ? 'Pro options' : 'Pro options (locked)',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: isPro ? Colors.amber.shade900 : Colors.grey.shade700,
+                ),
+              ),
+              const Spacer(),
+              if (!isPro)
+                TextButton(
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                        builder: (_) => const PaywallScreen()),
+                  ),
+                  child: const Text('Unlock'),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: TextFormField(
+                  controller: _dueDays,
+                  enabled: isPro,
+                  keyboardType: TextInputType.number,
+                  decoration: _dec('Due in (days)'),
+                  onChanged: (v) async => UsageStorage.setDueDays(
+                      int.tryParse(v.trim()) ?? 14),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: TextFormField(
+                  controller: _discountPct,
+                  enabled: isPro,
+                  keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true),
+                  decoration: _dec('Discount %'),
+                  onChanged: (v) async => UsageStorage.setDiscountPercent(
+                      double.tryParse(v.trim()) ?? 0.0),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: TextFormField(
+                  controller: _taxPct,
+                  enabled: isPro,
+                  keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true),
+                  decoration: _dec('Tax %'),
+                  onChanged: (v) async => UsageStorage.setTaxPercent(
+                      double.tryParse(v.trim()) ?? 0.0),
+                ),
+              ),
+            ],
+          ),
+          if (!isPro)
+            const Padding(
+              padding: EdgeInsets.only(top: 8),
+              child: Text(
+                'Unlock Pro to set custom due date, discount and tax on every invoice.',
+                style: TextStyle(fontSize: 12, color: Colors.black54),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
 
   InputDecoration _dec(String label) => InputDecoration(
         labelText: label,

@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 
 import 'screens/invoice_form_screen.dart';
+import 'services/billing_service.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  // Kick off real Google Play Billing — this also restores prior purchases
+  // so reinstalled devices regain their Pro entitlement automatically.
+  await BillingService.instance.initialize();
   runApp(const InovXAApp());
 }
 

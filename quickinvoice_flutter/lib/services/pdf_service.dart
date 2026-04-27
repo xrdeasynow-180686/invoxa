@@ -497,7 +497,10 @@ class PdfService {
 
   static pw.Widget _summaryRow(
       Invoice invoice, String cur, String dueStr, bool hasIcons) {
-    final subtotal = invoice.total;
+    final subtotal = invoice.subtotal;
+    final discount = invoice.discountAmount;
+    final tax = invoice.taxAmount;
+    final total = invoice.total;
     return pw.Row(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
@@ -547,11 +550,16 @@ class PdfService {
           flex: 3,
           child: pw.Column(
             children: [
-              _totalLine(
-                  'SUBTOTAL', '$cur${subtotal.toStringAsFixed(2)}',
+              _totalLine('SUBTOTAL', '$cur${subtotal.toStringAsFixed(2)}',
                   divider: true),
-              _totalLine('DISCOUNT', '${cur}0.00', divider: true),
-              _totalLine('TAX (GST 0%)', '${cur}0.00', divider: true),
+              _totalLine(
+                  'DISCOUNT (${invoice.discountPercent.toStringAsFixed(0)}%)',
+                  '-$cur${discount.toStringAsFixed(2)}',
+                  divider: true),
+              _totalLine(
+                  'TAX (${invoice.taxPercent.toStringAsFixed(0)}%)',
+                  '$cur${tax.toStringAsFixed(2)}',
+                  divider: true),
               pw.SizedBox(height: 4),
               pw.Row(
                 children: [
@@ -560,15 +568,13 @@ class PdfService {
                       padding: const pw.EdgeInsets.symmetric(
                           vertical: 12, horizontal: 14),
                       decoration: pw.BoxDecoration(color: _accentSoft),
-                      child: pw.Text(
-                        'TOTAL',
-                        style: pw.TextStyle(
-                          fontSize: 13,
-                          fontWeight: pw.FontWeight.bold,
-                          color: _accent,
-                          letterSpacing: 1,
-                        ),
-                      ),
+                      child: pw.Text('TOTAL',
+                          style: pw.TextStyle(
+                            fontSize: 13,
+                            fontWeight: pw.FontWeight.bold,
+                            color: _accent,
+                            letterSpacing: 1,
+                          )),
                     ),
                   ),
                   pw.Expanded(
@@ -577,14 +583,12 @@ class PdfService {
                           vertical: 12, horizontal: 14),
                       alignment: pw.Alignment.centerRight,
                       decoration: pw.BoxDecoration(color: _navy),
-                      child: pw.Text(
-                        '$cur${subtotal.toStringAsFixed(2)}',
-                        style: pw.TextStyle(
-                          fontSize: 14,
-                          fontWeight: pw.FontWeight.bold,
-                          color: PdfColors.white,
-                        ),
-                      ),
+                      child: pw.Text('$cur${total.toStringAsFixed(2)}',
+                          style: pw.TextStyle(
+                            fontSize: 14,
+                            fontWeight: pw.FontWeight.bold,
+                            color: PdfColors.white,
+                          )),
                     ),
                   ),
                 ],

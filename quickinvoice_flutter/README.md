@@ -75,6 +75,18 @@ flutter pub get
    android:requestLegacyExternalStorage="true"
    ```
 
+3. **Google Play Billing** — add the BILLING permission inside `<manifest>`:
+   ```xml
+   <uses-permission android:name="com.android.vending.BILLING" />
+   ```
+
+   Then in **Google Play Console**, create a managed (non-consumable) in-app product with:
+   - Product ID: `inovxa_pro` (must match `kProProductId` in `lib/services/billing_service.dart`)
+   - Price: your one-time Pro upgrade price (e.g. $4.99). The app reads the formatted price live from the store.
+   - Status: **Active**.
+
+   Sign and upload at least an internal-testing build, add yourself as a license tester, and use the test card "Always approves" to validate the purchase + restore flow before going live.
+
 > Note: On Android 13+ (API 33) the app falls back to its private documents directory because the public `Downloads` folder requires the MediaStore API to write reliably across all OEMs. The path that was used is shown in the success sheet, and the file can still be opened/shared from there.
 
 ### 5. Generate the app launcher icon (one-time)
