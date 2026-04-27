@@ -50,7 +50,4 @@ class Invoice {
   double get taxAmount => afterDiscount * (taxPercent / 100.0);
 
   double get total => afterDiscount + taxAmount;
-
-  double get total =>
-      items.fold(0.0, (sum, item) => sum + item.total);
 }
