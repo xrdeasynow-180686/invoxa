@@ -210,9 +210,15 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
 
     setState(() => _generating = true);
     try {
+      // Persist business details locally for next time.
+      await _persistBusiness();
+
       final invoice = Invoice(
         businessName: _businessName.text.trim(),
         businessAddress: _businessAddress.text.trim(),
+        businessPhone: _businessPhone.text.trim(),
+        businessEmail: _businessEmail.text.trim(),
+        businessAbn: _businessAbn.text.trim(),
         clientName: _clientName.text.trim(),
         clientAddress: _clientAddress.text.trim(),
         invoiceNumber: _invoiceNumber,
