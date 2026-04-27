@@ -26,7 +26,12 @@ class PdfService {
         logo = null;
       }
     }
-    return PdfBuilder(invoice, logo).build();
+    pw.Font? iconFont;
+    try {
+      final f = await rootBundle.load('assets/fonts/MaterialIcons-Regular.ttf');
+      iconFont = pw.Font.ttf(f);
+    } catch (_) {/* fall back to bullets */}
+    return PdfBuilder(invoice, logo, iconFont).build();
   }
 
   /// Saves the PDF bytes to the **public Downloads** folder on Android

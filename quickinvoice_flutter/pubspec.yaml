@@ -40,6 +40,7 @@ flutter:
   assets:
     - assets/app_icon.png
     - assets/default_invoice_logo.png
+    - assets/fonts/MaterialIcons-Regular.ttf
 
 flutter_launcher_icons:
   android: true

@@ -14,14 +14,28 @@ const _ink = PdfColor.fromInt(0xFF0F172A);
 const _muted = PdfColor.fromInt(0xFF6B7280);
 const _line = PdfColor.fromInt(0xFFE5E7EB);
 
+/// Material Icons codepoints
+const _icPin = 0xe0c8; // location_on
+const _icPhone = 0xe0cd; // phone
+const _icMail = 0xe0be; // email
+const _icBadge = 0xe873; // description
+const _icDoc = 0xe873; // description (invoice #)
+const _icCal = 0xe935; // calendar_today
+const _icClock = 0xe8b5; // schedule
+const _icPerson = 0xe7fd; // person
+const _icQuote = 0xe244; // format_quote
+const _icCard = 0xe870; // credit_card
+const _icWorld = 0xe80b; // public
+
 class PdfBuilder {
   final Invoice invoice;
   final pw.MemoryImage? logo;
+  final pw.Font? iconFont;
   late final String _dateStr;
   late final String _dueDateStr;
   late final String _currency;
 
-  PdfBuilder(this.invoice, this.logo) {
+  PdfBuilder(this.invoice, this.logo, [this.iconFont]) {
     _dateStr = DateFormat('dd MMM yyyy').format(invoice.date);
     _dueDateStr = DateFormat('dd MMM yyyy')
         .format(invoice.date.add(const Duration(days: 14)));
@@ -51,12 +65,11 @@ class PdfBuilder {
     return doc.save();
   }
 
-  // ─────────────── Header (logo+business  |  INVOICE+meta) ───────────────
+  // ─────────────── Header ───────────────
   pw.Widget _topRow() {
     return pw.Row(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
-        // LEFT
         pw.Expanded(
           flex: 3,
           child: pw.Column(
@@ -67,9 +80,9 @@ class PdfBuilder {
                 children: [
                   if (logo != null)
                     pw.Container(
-                      width: 56,
-                      height: 56,
-                      margin: const pw.EdgeInsets.only(right: 12),
+                      width: 64,
+                      height: 64,
+                      margin: const pw.EdgeInsets.only(right: 14),
                       child: pw.Image(logo!, fit: pw.BoxFit.contain),
                     ),
                   pw.Expanded(
@@ -79,7 +92,7 @@ class PdfBuilder {
                               : invoice.businessName)
                           .toUpperCase(),
                       style: pw.TextStyle(
-                        fontSize: 24,
+                        fontSize: 27,
                         fontWeight: pw.FontWeight.bold,
                         color: _navy,
                         letterSpacing: 1,
@@ -88,26 +101,24 @@ class PdfBuilder {
                   ),
                 ],
               ),
-              pw.SizedBox(height: 14),
+              pw.SizedBox(height: 16),
               if (invoice.businessAddress.isNotEmpty)
-                _iconLine('PIN', invoice.businessAddress),
+                _iconLine(_icPin, invoice.businessAddress, multiline: true),
               if (invoice.businessPhone.isNotEmpty)
-                _iconLine('TEL', invoice.businessPhone),
+                _iconLine(_icPhone, invoice.businessPhone),
               if (invoice.businessEmail.isNotEmpty)
-                _iconLine('AT', invoice.businessEmail),
+                _iconLine(_icMail, invoice.businessEmail),
               if (invoice.businessAbn.isNotEmpty)
-                _iconLine('ID', 'ABN: ${invoice.businessAbn}'),
+                _iconLine(_icBadge, 'ABN: ${invoice.businessAbn}'),
             ],
           ),
         ),
-        // Vertical divider
         pw.Container(
           width: 0.6,
-          height: 170,
+          height: 180,
           color: _line,
           margin: const pw.EdgeInsets.symmetric(horizontal: 18),
         ),
-        // RIGHT
         pw.Expanded(
           flex: 2,
           child: pw.Column(
@@ -115,17 +126,17 @@ class PdfBuilder {
             children: [
               pw.Text('INVOICE',
                   style: pw.TextStyle(
-                    fontSize: 36,
+                    fontSize: 38,
                     fontWeight: pw.FontWeight.bold,
                     color: _navy,
                     letterSpacing: 2,
                   )),
               pw.SizedBox(height: 14),
-              _metaRow('INVOICE #', invoice.invoiceNumber),
+              _metaRow(_icDoc, 'INVOICE #', invoice.invoiceNumber),
               pw.SizedBox(height: 10),
-              _metaRow('DATE', _dateStr),
+              _metaRow(_icCal, 'DATE', _dateStr),
               pw.SizedBox(height: 10),
-              _metaRow('DUE DATE', _dueDateStr),
+              _metaRow(_icClock, 'DUE DATE', _dueDateStr),
             ],
           ),
         ),
@@ -133,30 +144,34 @@ class PdfBuilder {
     );
   }
 
-  /// Small navy circle marker + label/value
-  pw.Widget _iconLine(String _, String text) {
+  pw.Widget _iconLine(int codepoint, String text, {bool multiline = false}) {
     return pw.Padding(
-      padding: const pw.EdgeInsets.only(bottom: 6),
+      padding: const pw.EdgeInsets.only(bottom: 7),
       child: pw.Row(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
-          _bullet(),
-          pw.SizedBox(width: 8),
+          _iconCircle(codepoint),
+          pw.SizedBox(width: 9),
           pw.Expanded(
-            child: pw.Text(text,
-                style: const pw.TextStyle(fontSize: 10.5, color: _ink)),
+            child: pw.Text(
+              text,
+              softWrap: true,
+              maxLines: multiline ? 4 : 2,
+              style: const pw.TextStyle(
+                  fontSize: 11, color: _ink, lineSpacing: 2),
+            ),
           ),
         ],
       ),
     );
   }
 
-  pw.Widget _metaRow(String label, String value) {
+  pw.Widget _metaRow(int codepoint, String label, String value) {
     return pw.Row(
       crossAxisAlignment: pw.CrossAxisAlignment.center,
       children: [
-        _bullet(),
-        pw.SizedBox(width: 10),
+        _iconCircle(codepoint, size: 22, glyph: 13),
+        pw.SizedBox(width: 11),
         pw.Column(
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
@@ -178,29 +193,38 @@ class PdfBuilder {
     );
   }
 
-  pw.Widget _bullet() => pw.Container(
-        width: 18,
-        height: 18,
-        decoration: pw.BoxDecoration(
-          shape: pw.BoxShape.circle,
-          border: pw.Border.all(color: _accent, width: 1.4),
-        ),
-        child: pw.Center(
-          child: pw.Container(
-            width: 6,
-            height: 6,
-            decoration: const pw.BoxDecoration(
-                color: _accent, shape: pw.BoxShape.circle),
-          ),
-        ),
-      );
+  pw.Widget _iconCircle(int codepoint, {double size = 18, double glyph = 11}) {
+    return pw.Container(
+      width: size,
+      height: size,
+      decoration: pw.BoxDecoration(
+        shape: pw.BoxShape.circle,
+        border: pw.Border.all(color: _accent, width: 1.2),
+      ),
+      child: pw.Center(
+        child: iconFont != null
+            ? pw.Text(
+                String.fromCharCode(codepoint),
+                style: pw.TextStyle(
+                  font: iconFont,
+                  fontSize: glyph,
+                  color: _accent,
+                ),
+              )
+            : pw.Container(
+                width: 5,
+                height: 5,
+                decoration: const pw.BoxDecoration(
+                    color: _accent, shape: pw.BoxShape.circle)),
+      ),
+    );
+  }
 
-  // ─────────────── Bill To + Thank You row ───────────────
+  // ─────────────── Bill To row ───────────────
   pw.Widget _billToRow() {
     return pw.Row(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
-        // BILL TO
         pw.Expanded(
           flex: 3,
           child: pw.Column(
@@ -210,13 +234,20 @@ class PdfBuilder {
                 padding: const pw.EdgeInsets.symmetric(
                     horizontal: 12, vertical: 6),
                 decoration: const pw.BoxDecoration(color: _navy),
-                child: pw.Text('BILL TO',
-                    style: pw.TextStyle(
-                      fontSize: 11,
-                      fontWeight: pw.FontWeight.bold,
-                      color: PdfColors.white,
-                      letterSpacing: 1.2,
-                    )),
+                child: pw.Row(
+                  mainAxisSize: pw.MainAxisSize.min,
+                  children: [
+                    _iconCircle(_icPerson, size: 16, glyph: 10),
+                    pw.SizedBox(width: 8),
+                    pw.Text('BILL TO',
+                        style: pw.TextStyle(
+                          fontSize: 11,
+                          fontWeight: pw.FontWeight.bold,
+                          color: PdfColors.white,
+                          letterSpacing: 1.2,
+                        )),
+                  ],
+                ),
               ),
               pw.SizedBox(height: 10),
               pw.Text(invoice.clientName,
@@ -226,12 +257,13 @@ class PdfBuilder {
                       color: _ink)),
               pw.SizedBox(height: 4),
               pw.Text(invoice.clientAddress,
-                  style: const pw.TextStyle(fontSize: 11, color: _ink)),
+                  softWrap: true,
+                  style: const pw.TextStyle(
+                      fontSize: 11, color: _ink, lineSpacing: 2)),
             ],
           ),
         ),
         pw.SizedBox(width: 18),
-        // THANK YOU card
         pw.Expanded(
           flex: 2,
           child: pw.Container(
@@ -240,20 +272,31 @@ class PdfBuilder {
               color: _accentSoft,
               borderRadius: pw.BorderRadius.circular(6),
             ),
-            child: pw.Column(
+            child: pw.Row(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-                pw.Text('THANK YOU!',
-                    style: pw.TextStyle(
-                        fontSize: 11,
-                        fontWeight: pw.FontWeight.bold,
-                        color: _accent,
-                        letterSpacing: 1)),
-                pw.SizedBox(height: 6),
-                pw.Text('Thank you for your business.',
-                    style: const pw.TextStyle(fontSize: 10.5, color: _ink)),
-                pw.Text('We appreciate your trust and support.',
-                    style: const pw.TextStyle(fontSize: 10.5, color: _ink)),
+                _iconCircle(_icQuote, size: 22, glyph: 13),
+                pw.SizedBox(width: 10),
+                pw.Expanded(
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Text('THANK YOU!',
+                          style: pw.TextStyle(
+                              fontSize: 11,
+                              fontWeight: pw.FontWeight.bold,
+                              color: _accent,
+                              letterSpacing: 1)),
+                      pw.SizedBox(height: 6),
+                      pw.Text('Thank you for your business.',
+                          style: const pw.TextStyle(
+                              fontSize: 10.5, color: _ink)),
+                      pw.Text('We appreciate your trust and support.',
+                          style: const pw.TextStyle(
+                              fontSize: 10.5, color: _ink)),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
@@ -336,13 +379,12 @@ class PdfBuilder {
         ),
       );
 
-  // ─────────────── Summary (payment info | subtotal/discount/tax/total) ───────────────
+  // ─────────────── Summary row ───────────────
   pw.Widget _summaryRow() {
     final subtotal = invoice.total;
     return pw.Row(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
-        // Payment info
         pw.Expanded(
           flex: 3,
           child: pw.Padding(
@@ -350,7 +392,7 @@ class PdfBuilder {
             child: pw.Row(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-                _bullet(),
+                _iconCircle(_icCard, size: 22, glyph: 13),
                 pw.SizedBox(width: 10),
                 pw.Expanded(
                   child: pw.Column(
@@ -376,7 +418,6 @@ class PdfBuilder {
             ),
           ),
         ),
-        // Totals stack
         pw.Expanded(
           flex: 3,
           child: pw.Column(
@@ -451,6 +492,9 @@ class PdfBuilder {
 
   // ─────────────── Footer ───────────────
   pw.Widget _footer() {
+    final hasEmail = invoice.businessEmail.trim().isNotEmpty;
+    final hasPhone = invoice.businessPhone.trim().isNotEmpty;
+
     return pw.Container(
       margin: const pw.EdgeInsets.only(top: 20),
       child: pw.Column(
@@ -463,16 +507,10 @@ class PdfBuilder {
             child: pw.Row(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-                _footerCell(
-                    'CONNECT WITH US',
-                    invoice.businessEmail.isNotEmpty
-                        ? invoice.businessEmail
-                        : 'www.inovxa.com.au'),
-                _footerCell(
-                    'NEED HELP?',
-                    invoice.businessPhone.isNotEmpty
-                        ? invoice.businessPhone
-                        : '+61 432 123 456'),
+                _footerCell(_icMail, 'CONNECT WITH US',
+                    hasEmail ? invoice.businessEmail : '—'),
+                _footerCell(_icPhone, 'NEED HELP?',
+                    hasPhone ? invoice.businessPhone : '—'),
                 pw.Expanded(
                   child: pw.Column(
                     crossAxisAlignment: pw.CrossAxisAlignment.end,
@@ -510,26 +548,28 @@ class PdfBuilder {
     );
   }
 
-  pw.Widget _footerCell(String label, String value) {
+  pw.Widget _footerCell(int codepoint, String label, String value) {
     return pw.Expanded(
       child: pw.Row(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
-          _bullet(),
-          pw.SizedBox(width: 8),
-          pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              pw.Text(label,
-                  style: pw.TextStyle(
-                      fontSize: 10,
-                      fontWeight: pw.FontWeight.bold,
-                      color: _accent,
-                      letterSpacing: 0.6)),
-              pw.SizedBox(height: 2),
-              pw.Text(value,
-                  style: const pw.TextStyle(fontSize: 10, color: _ink)),
-            ],
+          _iconCircle(codepoint, size: 22, glyph: 13),
+          pw.SizedBox(width: 9),
+          pw.Expanded(
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Text(label,
+                    style: pw.TextStyle(
+                        fontSize: 10,
+                        fontWeight: pw.FontWeight.bold,
+                        color: _accent,
+                        letterSpacing: 0.6)),
+                pw.SizedBox(height: 2),
+                pw.Text(value,
+                    style: const pw.TextStyle(fontSize: 10, color: _ink)),
+              ],
+            ),
           ),
         ],
       ),
