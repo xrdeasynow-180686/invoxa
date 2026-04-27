@@ -43,6 +43,7 @@ class BillingService extends ChangeNotifier {
   BillingStatus _status = BillingStatus.initialising;
   String? _error;
   bool _isPro = false;
+  bool _cacheLoaded = false;
 
   ProductDetails? get product => _product;
   BillingStatus get status => _status;

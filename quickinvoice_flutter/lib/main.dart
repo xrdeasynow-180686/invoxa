@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'screens/invoice_form_screen.dart';
@@ -5,9 +7,12 @@ import 'services/billing_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Kick off real Google Play Billing — this also restores prior purchases
-  // so reinstalled devices regain their Pro entitlement automatically.
-  await BillingService.instance.initialize();
+  // Fast path: load the cached Pro flag from SharedPreferences (~ms) so the
+  // first frame already reflects the correct entitlement.
+  await BillingService.instance.warmCache();
+  // Slow path: connect to Google Play, query products, restore purchases —
+  // runs in the background so the UI is not blocked on app start.
+  unawaited(BillingService.instance.initialize());
   runApp(const InovXAApp());
 }
 
