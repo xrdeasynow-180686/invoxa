@@ -54,14 +54,24 @@ class BillingService extends ChangeNotifier {
   /// product details have loaded.
   String get formattedPrice => _product?.price ?? '';
 
+  /// Synchronous fast-path — only reads the SharedPreferences Pro cache.
+  /// Call this from `main()` BEFORE `runApp` so the first frame already
+  /// reflects the last-known entitlement. The expensive network init
+  /// (product query, restore) runs in the background via [initialize].
+  Future<void> warmCache() async {
+    if (_cacheLoaded) return;
+    _prefs = await SharedPreferences.getInstance();
+    _isPro = _prefs.getBool(_kProCacheKey) ?? false;
+    _cacheLoaded = true;
+  }
+
   /// Initialises the plugin, restores prior purchases and starts listening
   /// to the purchase stream. Safe to call multiple times — subsequent calls
   /// are no-ops.
   Future<void> initialize() async {
     if (_subscription != null) return;
     try {
-      _prefs = await SharedPreferences.getInstance();
-      _isPro = _prefs.getBool(_kProCacheKey) ?? false;
+      await warmCache();
 
       final available = await _iap.isAvailable();
       if (!available) {

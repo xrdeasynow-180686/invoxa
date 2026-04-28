@@ -607,7 +607,6 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
               const SizedBox(width: 8),
               Text(
                 isPro ? 'Pro options' : 'Pro options (locked)',
-                style: TextStyleions' : 'Pro options (locked)',
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.bold,
