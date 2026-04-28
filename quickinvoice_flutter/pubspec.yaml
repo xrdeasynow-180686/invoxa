@@ -31,6 +31,9 @@ dependencies:
   # Local key-value storage for business profile (offline)
   shared_preferences: ^2.3.2
 
+  # Opens a saved PDF in the device's default viewer
+  open_file: ^3.5.7
+
   # Google Play Billing (real Pro entitlement)
   in_app_purchase: ^3.2.0
   in_app_purchase_android: ^0.3.6+7

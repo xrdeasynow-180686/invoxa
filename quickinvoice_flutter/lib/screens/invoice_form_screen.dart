@@ -270,17 +270,26 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
         currency: _currency.text.trim(),
         items: _items,
         dueDays: int.tryParse(_dueDays.text.trim()) ?? 14,
-        discountPercent: BillingService.instance.isPro
-            ? (double.tryParse(_discountPct.text.trim()) ?? 0.0)
-            : 0.0,
-        taxPercent: BillingService.instance.isPro
-            ? (double.tryParse(_taxPct.text.trim()) ?? 0.0)
-            : 0.0,
+        discountPercent: double.tryParse(_discountPct.text.trim()) ?? 0.0,
+        taxPercent: double.tryParse(_taxPct.text.trim()) ?? 0.0,
         logoBytes: _logoBytes,
       );
 
       final bytes = await PdfService.buildPdf(invoice);
       final path = await PdfService.savePdf(bytes, invoice.invoiceNumber);
+
+      // Persist to invoice history (survives app restart).
+      await HistoryStorage.add(InvoiceHistoryItem(
+        invoiceNumber: invoice.invoiceNumber,
+        clientName: invoice.clientName,
+        businessName: invoice.businessName,
+        date: invoice.date,
+        total: invoice.total,
+        currency: invoice.currency.trim().isEmpty
+            ? ''
+            : '${invoice.currency.trim()} ',
+        pdfPath: path,
+      ));
 
       // Count this invoice toward the free quota.
       await UsageStorage.incrementInvoiceCount();
@@ -343,6 +352,14 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
+          IconButton(
+            tooltip: 'Invoice history',
+            icon: const Icon(Icons.receipt_long),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                  builder: (_) => const InvoiceHistoryScreen()),
+            ),
+          ),
           IconButton(
             tooltip: 'Clear saved business',
             icon: const Icon(Icons.delete_sweep_outlined),
@@ -606,11 +623,11 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
                   color: isPro ? Colors.amber.shade800 : Colors.grey),
               const SizedBox(width: 8),
               Text(
-                isPro ? 'Pro options' : 'Pro options (locked)',
+                isPro ? 'Invoice options (Pro)' : 'Invoice options',
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.bold,
-                  color: isPro ? Colors.amber.shade900 : Colors.grey.shade700,
+                  color: isPro ? Colors.amber.shade900 : Colors.indigo,
                 ),
               ),
               const Spacer(),
@@ -630,7 +647,6 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
               Expanded(
                 child: TextFormField(
                   controller: _dueDays,
-                  enabled: isPro,
                   keyboardType: TextInputType.number,
                   decoration: _dec('Due in (days)'),
                   onChanged: (v) async => UsageStorage.setDueDays(
@@ -641,7 +657,6 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
               Expanded(
                 child: TextFormField(
                   controller: _discountPct,
-                  enabled: isPro,
                   keyboardType: const TextInputType.numberWithOptions(
                       decimal: true),
                   decoration: _dec('Discount %'),
@@ -653,7 +668,6 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
               Expanded(
                 child: TextFormField(
                   controller: _taxPct,
-                  enabled: isPro,
                   keyboardType: const TextInputType.numberWithOptions(
                       decimal: true),
                   decoration: _dec('Tax %'),
@@ -667,7 +681,7 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
             const Padding(
               padding: EdgeInsets.only(top: 8),
               child: Text(
-                'Unlock Pro to set custom due date, discount and tax on every invoice.',
+                'Free plan: invoices show a small "InovXA FREE" watermark. Unlock Pro to remove it.',
                 style: TextStyle(fontSize: 12, color: Colors.black54),
               ),
             ),
@@ -707,21 +721,19 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
                   ),
                 ),
             ],
-            onChanged: !isPro
-                ? null
-                : (v) async {
-                    if (v == null) return;
-                    setState(() => _colorIdx = v);
-                    await UsageStorage.setColorIndex(v);
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          duration: const Duration(seconds: 1),
-                          content: Text('Theme set to ${kPalettes[v].name}'),
-                        ),
-                      );
-                    }
-                  },
+            onChanged: (v) async {
+              if (v == null) return;
+              setState(() => _colorIdx = v);
+              await UsageStorage.setColorIndex(v);
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    duration: const Duration(seconds: 1),
+                    content: Text('Theme set to ${kPalettes[v].name}'),
+                  ),
+                );
+              }
+            },
           ),
         ],
       ),

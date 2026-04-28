@@ -53,6 +53,7 @@ class PdfService {
 
     final logo = await _resolveLogo(invoice.logoBytes);
     final iconFont = await _loadIconFont();
+    final showWatermark = !UsageStorage.isPro();
 
     final doc = pw.Document(
       theme: pw.ThemeData.base().copyWith(
@@ -64,14 +65,18 @@ class PdfService {
 
     final dateStr = DateFormat('dd MMM yyyy').format(invoice.date);
     final dueStr = DateFormat('dd MMM yyyy')
-        .format(invoice.date.add(const Duration(days: 14)));
+        .format(invoice.date.add(Duration(days: invoice.dueDays)));
     final cur =
         invoice.currency.trim().isEmpty ? '' : '${invoice.currency.trim()} ';
 
     doc.addPage(
       pw.MultiPage(
-        pageFormat: PdfPageFormat.a4,
-        margin: const pw.EdgeInsets.fromLTRB(36, 36, 36, 0),
+        pageTheme: pw.PageTheme(
+          pageFormat: PdfPageFormat.a4,
+          margin: const pw.EdgeInsets.fromLTRB(36, 36, 36, 0),
+          buildBackground:
+              showWatermark ? (context) => _buildWatermark() : null,
+        ),
         build: (_) => [
           _header(invoice, logo, dateStr, dueStr, iconFont != null),
           pw.SizedBox(height: 22),
@@ -86,6 +91,30 @@ class PdfService {
     );
 
     return doc.save();
+  }
+
+  /// Diagonal "InovXA FREE" watermark — only applied when the user is NOT
+  /// Pro. Removed automatically as soon as entitlement flips to Pro.
+  static pw.Widget _buildWatermark() {
+    return pw.FullPage(
+      ignoreMargins: true,
+      child: pw.Center(
+        child: pw.Transform.rotate(
+          angle: -0.6,
+          child: pw.Opacity(
+            opacity: 0.14,
+            child: pw.Text(
+              'InovXA  FREE',
+              style: pw.TextStyle(
+                fontSize: 110,
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColors.grey700,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   /// Saves the PDF bytes to the **public Downloads** folder on Android
