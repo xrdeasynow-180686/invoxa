@@ -17,7 +17,6 @@ import '../services/history_storage.dart';
 import '../services/pdf_service.dart';
 import '../services/usage_storage.dart';
 import '../widgets/item_input_widget.dart';
-import 'paywall_screen.dart';
 
 class InvoiceFormScreen extends StatefulWidget {
   const InvoiceFormScreen({super.key});
@@ -239,19 +238,6 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
     if (_items.isEmpty) {
       _showSnack('Add at least one item.');
       return;
-    }
-
-    // Paywall gate — block when free quota is exhausted and user is not Pro.
-    final allowed = await UsageStorage.canGenerateInvoice();
-    if (!allowed) {
-      if (!mounted) return;
-      final unlocked = await Navigator.of(context).push<bool>(
-        MaterialPageRoute(builder: (_) => const PaywallScreen()),
-      );
-      // Re-check after returning — proceed only if Pro is now active.
-      if (unlocked != true && !UsageStorage.isPro()) {
-        return;
-      }
     }
 
     setState(() => _generating = true);
@@ -598,41 +584,29 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
       );
 
   Widget _proOptionsSection() {
-    final isPro = BillingService.instance.isPro;
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: isPro ? Colors.amber.shade50 : Colors.grey.shade100,
+        color: Colors.indigo.shade50,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-            color: isPro ? Colors.amber.shade300 : Colors.grey.shade300),
+        border: Border.all(color: Colors.indigo.shade100),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.workspace_premium,
-                  color: isPro ? Colors.amber.shade800 : Colors.grey),
+              const Icon(Icons.tune, color: Colors.indigo),
               const SizedBox(width: 8),
-              Text(
-                isPro ? 'Invoice options (Pro)' : 'Invoice options',
+              const Text(
+                'Invoice options',
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.bold,
-                  color: isPro ? Colors.amber.shade900 : Colors.indigo,
+                  color: Colors.indigo,
                 ),
               ),
-              const Spacer(),
-              if (!isPro)
-                TextButton(
-                  onPressed: () => Navigator.of(context).push(
-                    MaterialPageRoute(
-                        builder: (_) => const PaywallScreen()),
-                  ),
-                  child: const Text('Unlock'),
-                ),
             ],
           ),
           const SizedBox(height: 8),
@@ -671,22 +645,10 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
               ),
             ],
           ),
-          if (!isPro)
-            const Padding(
-              padding: EdgeInsets.only(top: 8),
-              child: Text(
-                'Free plan: invoices show a small "InovXA FREE" watermark. Unlock Pro to remove it.',
-                style: TextStyle(fontSize: 12, color: Colors.black54),
-              ),
-            ),
           const SizedBox(height: 12),
-          Text(
+          const Text(
             'Invoice colour theme',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: isPro ? Colors.black : Colors.grey.shade600,
-            ),
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 6),
           DropdownButtonFormField<int>(

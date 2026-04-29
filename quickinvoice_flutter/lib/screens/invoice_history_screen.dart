@@ -2,11 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../models/invoice_history_item.dart';
-import '../services/billing_service.dart';
 import '../services/history_storage.dart';
 import 'invoice_detail_screen.dart';
 import 'invoice_form_screen.dart';
-import 'paywall_screen.dart';
 
 /// Home screen: shows every persisted invoice and offers a FAB to create
 /// a new one. After a successful creation the form pops back here, the
@@ -21,23 +19,11 @@ class InvoiceHistoryScreen extends StatefulWidget {
 class _InvoiceHistoryScreenState extends State<InvoiceHistoryScreen> {
   List<InvoiceHistoryItem> _items = [];
   bool _loading = true;
-  final _billing = BillingService.instance;
 
   @override
   void initState() {
     super.initState();
-    _billing.addListener(_onBillingChange);
     _load();
-  }
-
-  @override
-  void dispose() {
-    _billing.removeListener(_onBillingChange);
-    super.dispose();
-  }
-
-  void _onBillingChange() {
-    if (mounted) setState(() {});
   }
 
   Future<void> _load() async {
@@ -56,15 +42,8 @@ class _InvoiceHistoryScreenState extends State<InvoiceHistoryScreen> {
     _load(); // refresh on return
   }
 
-  Future<void> _openPaywall() async {
-    await Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const PaywallScreen()),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    final isPro = _billing.isPro;
     return Scaffold(
       appBar: AppBar(
         title: const Text('InovXA'),
@@ -72,12 +51,6 @@ class _InvoiceHistoryScreenState extends State<InvoiceHistoryScreen> {
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
-          IconButton(
-            tooltip: isPro ? 'Pro account' : 'Upgrade to Pro',
-            icon: Icon(
-                isPro ? Icons.workspace_premium : Icons.workspace_premium_outlined),
-            onPressed: _openPaywall,
-          ),
           IconButton(
             tooltip: 'Refresh',
             icon: const Icon(Icons.refresh),
