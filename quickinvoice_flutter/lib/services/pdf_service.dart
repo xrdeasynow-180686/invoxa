@@ -582,11 +582,11 @@ class PdfService {
               _totalLine('SUBTOTAL', '$cur${subtotal.toStringAsFixed(2)}',
                   divider: true),
               _totalLine(
-                  'DISCOUNT (${invoice.discountPercent.toStringAsFixed(0)}%)',
+                  'DISCOUNT (${_fmtPct(invoice.discountPercent)}%)',
                   '-$cur${discount.toStringAsFixed(2)}',
                   divider: true),
               _totalLine(
-                  'TAX (${invoice.taxPercent.toStringAsFixed(0)}%)',
+                  'TAX (${_fmtPct(invoice.taxPercent)}%)',
                   '$cur${tax.toStringAsFixed(2)}',
                   divider: true),
               pw.SizedBox(height: 4),
@@ -630,8 +630,7 @@ class PdfService {
   }
 
   static pw.Widget _totalLine(String label, String value,
-      {bool divider = false}) {
-    return pw.Container(
+      {bool divider = false}) {    return pw.Container(
       padding: const pw.EdgeInsets.symmetric(vertical: 8, horizontal: 14),
       decoration: pw.BoxDecoration(
         border: divider
@@ -656,6 +655,16 @@ class PdfService {
         ],
       ),
     );
+  }
+
+  /// Formats a percentage exactly as the user typed — no rounding.
+  /// 1.25 → "1.25"   2 → "2"   2.50 → "2.5"   3.7 → "3.7"
+  static String _fmtPct(double v) {
+    if (v == v.roundToDouble()) return v.toStringAsFixed(0);
+    var s = v.toStringAsFixed(4);
+    s = s.replaceFirst(RegExp(r'0+$'), '');
+    if (s.endsWith('.')) s = s.substring(0, s.length - 1);
+    return s;
   }
 
   // ───────────────────────── FOOTER ─────────────────────────
