@@ -2,13 +2,13 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import 'screens/invoice_form_screen.dart';
+import 'screens/invoice_history_screen.dart';
 import 'services/billing_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // Fast path: load the cached Pro flag from SharedPreferences (~ms) so the
-  // first frame already reflects the correct entitlement.
+  // first frame already reflects the last-known entitlement.
   await BillingService.instance.warmCache();
   // Slow path: connect to Google Play, query products, restore purchases —
   // runs in the background so the UI is not blocked on app start.
@@ -32,7 +32,7 @@ class InovXAApp extends StatelessWidget {
           isDense: true,
         ),
       ),
-      home: const InvoiceFormScreen(),
+      home: const InvoiceHistoryScreen(),
     );
   }
 }

@@ -2,9 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../models/invoice_history_item.dart';
+import '../services/billing_service.dart';
 import '../services/history_storage.dart';
 import 'invoice_detail_screen.dart';
+import 'invoice_form_screen.dart';
+import 'paywall_screen.dart';
 
+/// Home screen: shows every persisted invoice and offers a FAB to create
+/// a new one. After a successful creation the form pops back here, the
+/// list refreshes and the new invoice appears at the top.
 class InvoiceHistoryScreen extends StatefulWidget {
   const InvoiceHistoryScreen({super.key});
 
@@ -15,11 +21,23 @@ class InvoiceHistoryScreen extends StatefulWidget {
 class _InvoiceHistoryScreenState extends State<InvoiceHistoryScreen> {
   List<InvoiceHistoryItem> _items = [];
   bool _loading = true;
+  final _billing = BillingService.instance;
 
   @override
   void initState() {
     super.initState();
+    _billing.addListener(_onBillingChange);
     _load();
+  }
+
+  @override
+  void dispose() {
+    _billing.removeListener(_onBillingChange);
+    super.dispose();
+  }
+
+  void _onBillingChange() {
+    if (mounted) setState(() {});
   }
 
   Future<void> _load() async {
@@ -31,14 +49,35 @@ class _InvoiceHistoryScreenState extends State<InvoiceHistoryScreen> {
     });
   }
 
+  Future<void> _openForm() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const InvoiceFormScreen()),
+    );
+    _load(); // refresh on return
+  }
+
+  Future<void> _openPaywall() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const PaywallScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isPro = _billing.isPro;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Invoice History'),
+        title: const Text('InovXA'),
         backgroundColor: Colors.indigo,
         foregroundColor: Colors.white,
+        elevation: 0,
         actions: [
+          IconButton(
+            tooltip: isPro ? 'Pro account' : 'Upgrade to Pro',
+            icon: Icon(
+                isPro ? Icons.workspace_premium : Icons.workspace_premium_outlined),
+            onPressed: _openPaywall,
+          ),
           IconButton(
             tooltip: 'Refresh',
             icon: const Icon(Icons.refresh),
@@ -49,16 +88,7 @@ class _InvoiceHistoryScreenState extends State<InvoiceHistoryScreen> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _items.isEmpty
-              ? const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(32),
-                    child: Text(
-                      'No invoices yet.\nCreate one and it will show up here.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 14, color: Colors.black54),
-                    ),
-                  ),
-                )
+              ? _emptyState()
               : RefreshIndicator(
                   onRefresh: _load,
                   child: ListView.separated(
@@ -104,6 +134,44 @@ class _InvoiceHistoryScreenState extends State<InvoiceHistoryScreen> {
                     },
                   ),
                 ),
+      floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: Colors.indigo,
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.add),
+        label: const Text('New invoice'),
+        onPressed: _openForm,
+      ),
+    );
+  }
+
+  Widget _emptyState() {
+    return ListView(
+      // ListView so RefreshIndicator still works on empty state
+      physics: const AlwaysScrollableScrollPhysics(),
+      children: [
+        const SizedBox(height: 80),
+        const Icon(Icons.receipt_long_outlined,
+            size: 64, color: Colors.indigo),
+        const SizedBox(height: 12),
+        const Center(
+          child: Text(
+            'No invoices yet',
+            style: TextStyle(
+                fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+        ),
+        const SizedBox(height: 8),
+        const Center(
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 32),
+            child: Text(
+              'Tap "New invoice" below to create your first one.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.black54),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

@@ -9,9 +9,11 @@ import 'package:printing/printing.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../models/invoice.dart';
+import '../models/invoice_history_item.dart';
 import '../models/item.dart';
 import '../services/billing_service.dart';
 import '../services/business_storage.dart';
+import '../services/history_storage.dart';
 import '../services/pdf_service.dart';
 import '../services/usage_storage.dart';
 import '../widgets/item_input_widget.dart';
@@ -347,19 +349,11 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('InovXA'),
+        title: const Text('New invoice'),
         backgroundColor: Colors.indigo,
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
-          IconButton(
-            tooltip: 'Invoice history',
-            icon: const Icon(Icons.receipt_long),
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(
-                  builder: (_) => const InvoiceHistoryScreen()),
-            ),
-          ),
           IconButton(
             tooltip: 'Clear saved business',
             icon: const Icon(Icons.delete_sweep_outlined),
