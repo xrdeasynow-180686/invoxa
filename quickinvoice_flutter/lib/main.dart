@@ -1,38 +1,40 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
-import 'screens/invoice_history_screen.dart';
+import 'screens/home_screen.dart';
 import 'services/billing_service.dart';
+import 'services/invoice_store.dart';
+import 'theme/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Fast path: load the cached Pro flag from SharedPreferences (~ms) so the
-  // first frame already reflects the last-known entitlement.
   await BillingService.instance.warmCache();
-  // Slow path: connect to Google Play, query products, restore purchases —
-  // runs in the background so the UI is not blocked on app start.
   unawaited(BillingService.instance.initialize());
-  runApp(const InovXAApp());
+  final store = InvoiceStore();
+  await store.bootstrap();
+  runApp(InovXAApp(store: store));
 }
 
 class InovXAApp extends StatelessWidget {
-  const InovXAApp({super.key});
+  final InvoiceStore store;
+  const InovXAApp({super.key, required this.store});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'InovXA',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
-        useMaterial3: true,
-        inputDecorationTheme: const InputDecorationTheme(
-          border: OutlineInputBorder(),
-          isDense: true,
+    return ChangeNotifierProvider.value(
+      value: store,
+      child: Consumer<InvoiceStore>(
+        builder: (_, s, __) => MaterialApp(
+          title: 'InovXA',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.light(),
+          darkTheme: AppTheme.dark(),
+          themeMode: s.themeMode,
+          home: const HomeScreen(),
         ),
       ),
-      home: const InvoiceHistoryScreen(),
     );
   }
 }

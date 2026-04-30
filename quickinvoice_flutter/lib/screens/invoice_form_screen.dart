@@ -652,7 +652,7 @@ class _InvoiceFormScreenState extends State<InvoiceFormScreen> {
           ),
           const SizedBox(height: 6),
           DropdownButtonFormField<int>(
-            value: _colorIdx,
+            initialValue: _colorIdx,
             isDense: true,
             decoration: _dec('Theme'),
             items: [

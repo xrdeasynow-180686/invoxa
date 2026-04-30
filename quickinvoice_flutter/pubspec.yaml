@@ -31,6 +31,10 @@ dependencies:
   # Local key-value storage for business profile (offline)
   shared_preferences: ^2.3.2
 
+  # State management + premium typography
+  provider: ^6.1.2
+  google_fonts: ^6.2.1
+
   # Opens a saved PDF in the device's default viewer
   open_file: ^3.5.7
 

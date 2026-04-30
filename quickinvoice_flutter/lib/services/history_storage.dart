@@ -47,6 +47,20 @@ class HistoryStorage {
         _key, jsonEncode(list.map((e) => e.toJson()).toList()));
   }
 
+  /// Toggles or sets the paid/pending status for a given invoice.
+  static Future<void> setStatus(String invoiceNumber, String status) async {
+    final list = await getAll();
+    final idx = list.indexWhere((e) => e.invoiceNumber == invoiceNumber);
+    if (idx < 0) return;
+    list[idx] = list[idx].copyWith(
+      status: status,
+      paidAt: status == 'paid' ? DateTime.now() : null,
+    );
+    final p = await SharedPreferences.getInstance();
+    await p.setString(
+        _key, jsonEncode(list.map((e) => e.toJson()).toList()));
+  }
+
   static Future<void> clear() async {
     final p = await SharedPreferences.getInstance();
     await p.remove(_key);

@@ -90,8 +90,10 @@ class PdfService {
     return doc.save();
   }
 
-  /// Diagonal "InovXA FREE" watermark — only applied when the user is NOT
-  /// Pro. Removed automatically as soon as entitlement flips to Pro.
+  /// Diagonal "InovXA FREE" watermark — kept for potential future use
+  /// (was previously applied to non-Pro PDFs; the watermark is now disabled
+  /// for everyone). Marked `unused_element` ignore so analyze stays clean.
+  // ignore: unused_element
   static pw.Widget _buildWatermark() {
     return pw.FullPage(
       ignoreMargins: true,
