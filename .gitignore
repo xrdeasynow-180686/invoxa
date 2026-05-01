@@ -314,3 +314,12 @@ credentials.json
 *.key
 .credentials
 .flutter-sdk/flutter/.git/objects/pack/pack-c998ba817f931809f09357c333c97a848d7c5377.pack
+-e 
+# Environment and credential files
+.env
+.env.*
+*.env
+credentials.json
+*.pem
+*.key
+.credentials
