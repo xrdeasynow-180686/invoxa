@@ -1,0 +1,63 @@
+name: inovxa
+description: InovXA - A simple, fast invoice generator that exports professional PDFs.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+  flutter: ">=3.19.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+
+  # PDF generation
+  pdf: ^3.11.1
+  printing: ^5.13.2
+
+  # Image picking for the logo
+  image_picker: ^1.1.2
+
+  # Filesystem paths (saving the PDF locally)
+  path_provider: ^2.1.4
+
+  # Sharing the generated PDF (WhatsApp, email, etc.)
+  share_plus: ^10.0.2
+
+  # Date formatting
+  intl: ^0.19.0
+
+  # Local key-value storage for business profile (offline)
+  shared_preferences: ^2.3.2
+
+  # Opens a saved PDF in the device's default viewer
+  open_file: ^3.5.7
+
+  # Google Play Billing (real Pro entitlement)
+  in_app_purchase: ^3.2.0
+  in_app_purchase_android: ^0.3.6+7
+
+  # Firebase — lightweight analytics only (app_open, invoice_created, invoice_shared).
+  firebase_core: ^3.6.0
+  firebase_analytics: ^11.3.3
+
+dev_dependencies:
+  flutter_lints: ^4.0.0
+  flutter_launcher_icons: ^0.14.1
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/app_icon.png
+    - assets/default_invoice_logo.png
+    - assets/fonts/MaterialIcons-Regular.ttf
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/app_icon.png"
+  remove_alpha_ios: true
+  adaptive_icon_background: "#0E1F4D"
+  adaptive_icon_foreground: "assets/app_icon.png"
+  min_sdk_android: 21
